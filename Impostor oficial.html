@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Impostor de Fútbol</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+      padding: 2rem;
+      background: linear-gradient(-45deg, #0f0f0f, #1a1a1a, #0f0f0f);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+      color: #f2f2f2;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    h1 {
+      font-size: 3rem;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    select, button {
+      border-radius: 8px;
+      border: none;
+      padding: 1rem;
+      font-size: 1.1rem;
+      margin: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    select {
+      background-color: #1e1e1e;
+      color: #f2f2f2;
+      border: 1px solid #444;
+      width: 120px;
+    }
+
+    button {
+      background-color: #2196f3;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1976d2;
+      transform: scale(1.05);
+    }
+
+    #setup, #game, #reveal, #end {
+      display: none;
+      max-width: 600px;
+      margin: auto;
+      background-color: #1e1e1e;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s ease;
+    }
+
+    .show {
+      display: block !important;
+      opacity: 1 !important;
+      transform: translateY(0px) !important;
+    }
+
+    .hidden-text {
+      font-size: 2rem;
+      margin: 2rem 0;
+      font-weight: bold;
+      color: #90caf9;
+    }
+
+    .disclaimer {
+      font-size: 0.65rem;
+      opacity: 0.2;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Impostor de Fútbol</h1>
+  <div id="setup" class="show">
+    <p>¿Cuántos jugadores van a jugar?</p>
+    <select id="playerCount">
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5" selected>5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+    <br/><br/>
+    <button onclick="startGame()">Comenzar</button>
+  </div>
+
+  <div id="game">
+    <h2>Jugador <span id="currentPlayer"></span></h2>
+    <button onclick="revealWord()">Mostrar palabra</button>
+  </div>
+
+  <div id="reveal">
+    <p class="hidden-text" id="word"></p>
+    <button onclick="nextPlayer()">Siguiente jugador</button>
+  </div>
+
+  <div id="end">
+    <h2>Todos tienen su palabra</h2>
+    <p>¡A jugar!</p>
+    <button onclick="resetGame()">Jugar otra ronda</button>
+  </div>
+
+  <p class="disclaimer">Propiedad y Creación de Santino Peluzzo ⓒ. Todos los derechos reservados. Nahue y el Pety me pueden chupar bien los 2 huevos</p>
+
+  <script>
+    const players = [];
+    let current = 0;
+    let roles = [];
+
+    const playerNames = [
+  "Lionel Messi", "Cristiano Ronaldo", "Diego Maradona", "Pelé", "Zinedine Zidane",
+  "Ronaldinho", "Neymar", "Kylian Mbappé", "Luka Modric", "Erling Haaland",
+  "Karim Benzema", "Paolo Maldini", "Franz Beckenbauer", "Andrea Pirlo", "Xavi",
+  "Andrés Iniesta", "Marco van Basten", "George Best", "Thierry Henry", "David Beckham",
+  "Rivaldo", "Roberto Carlos", "Ronaldo Nazário", "Iker Casillas", "Gianluigi Buffon",
+  "Manuel Neuer", "Philipp Lahm", "Sergio Ramos", "Gerard Piqué", "Carlos Tevez",
+  "Sergio Agüero", "Ángel Di María", "Juan Román Riquelme", "Carlos Valderrama",
+  "James Rodríguez", "Luis Suárez", "Edinson Cavani", "Frank Lampard", "Steven Gerrard",
+  "Wayne Rooney", "Alan Shearer", "Didier Drogba", "Yaya Touré", "Mohamed Salah",
+  "Sadio Mané", "Kevin De Bruyne", "Virgil van Dijk", "Antoine Griezmann", "Robert Lewandowski"
+];
+
+    function showSection(id) {
+      document.querySelectorAll('#setup, #game, #reveal, #end').forEach(div => {
+        div.classList.remove('show');
+        div.style.display = 'none';
+      });
+      const section = document.getElementById(id);
+      section.style.display = 'block';
+      setTimeout(() => section.classList.add('show'), 10);
+    }
+
+    function startGame() {
+      const count = parseInt(document.getElementById("playerCount").value);
+      if (count < 3 || count > 10) return alert("El número debe estar entre 3 y 10.");
+      players.length = count;
+      current = 0;
+      roles = [];
+
+      const impostorIndex = Math.floor(Math.random() * count);
+      const word = playerNames[Math.floor(Math.random() * playerNames.length)];
+
+      for (let i = 0; i < count; i++) {
+        roles.push(i === impostorIndex ? "IMPOSTOR" : word);
+      }
+
+      showSection("game");
+      updatePlayerNumber();
+    }
+
+    function updatePlayerNumber() {
+      document.getElementById("currentPlayer").textContent = current + 1;
+    }
+
+    function revealWord() {
+      document.getElementById("word").textContent = roles[current];
+      showSection("reveal");
+    }
+
+    function nextPlayer() {
+      current++;
+      if (current >= roles.length) {
+        showSection("end");
+      } else {
+        showSection("game");
+        updatePlayerNumber();
+      }
+    }
+
+    function resetGame() {
+      document.getElementById("playerCount").value = 5;
+      showSection("setup");
+    }
+
+    window.onload = () => showSection("setup");
+  </script>
+</body>
+</html>
